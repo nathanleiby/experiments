@@ -15,8 +15,6 @@ from pprint import pprint
 import json
 from collections import OrderedDict
 
-import ipdb
-
 def get_args():
   """ Returns (username, password) tuple """
   parser = argparse.ArgumentParser(description='Process some integers.')
@@ -59,9 +57,9 @@ def main():
   username, password = get_args()
   wunderlist = connect_to_wunderlist(username, password)
   print "Getting all tasks"
-  ipdb.set_trace()
   for l in wunderlist.lists:
     for task in l.tasks:
+      print("")
       pprint(task)
       print("Due when?")
       # Tell user the options
@@ -69,20 +67,34 @@ def main():
         print( "{}. {}".format(str(idx+1), value) )
       user_text = raw_input()
 
-      # Process the users input. If matched, update the due date
-      due_date_was_updated = False
-      for idx, value in enumerate(due_date_options.keys()):
-        if user_text == str(idx+1):
-          due_date_iso = due_date_options[value]()
-          # def update_task_due_date(self, task_title, due_date, recurrence_count=1, list_title="inbox"):
-          wunderlist.update_task_due_date(task.info['title'], due_date_iso, recurrence_count=1, list_title='inbox')
-          print "Due {}".format(value)
-          due_date_was_updated = True
-          break
-
-      if not due_date_was_updated:
+      # Process the users input.
+      if user_text == '':
         print "Skipping..."
+      else:
+        # If matches a due date option, update the due date
+        due_date_was_updated = False
+        for idx, value in enumerate(due_date_options.keys()):
+          if user_text == str(idx+1):
+            due_date_iso = due_date_options[value]()
+            # def update_task_due_date(self, task_title, due_date, recurrence_count=1, list_title="inbox"):
+            wunderlist.update_task_due_date(task.info['title'], due_date_iso, recurrence_count=1, list_title='inbox')
+            print "Due {}".format(value)
+            due_date_was_updated = True
+            break
 
+        # Otherwise, rename task per user input
+        if not due_date_was_updated:
+          new_title = user_text
+          print "Updating title to '{}'".format(new_title)
+          are_you_sure = None
+          while are_you_sure not in ['y', 'n']:
+            are_you_sure = raw_input("Are you sure? [y/n]")
+
+          if are_you_sure == 'y':
+            # update_task_title(self, task_title, new_title, list_title="inbox"):
+            wunderlist.update_task_title(task.info['title'], new_title, list_title='inbox')
+          else:
+            print "(Skipping title change)"
 
 
 
